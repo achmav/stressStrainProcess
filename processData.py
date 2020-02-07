@@ -5,6 +5,8 @@ import statistics
 import numpy
 import matplotlib.pyplot as plt
 from matplotlib import cm
+import urllib
+
 
 class dataStruct():
     def __init__(self,processAll = True, web = False):
