@@ -21,16 +21,19 @@ class dataStruct():
         self._pickleSamples()
     #Loads in our Composition File
     def _loadCompositions(self,fileName = 'Compositions.csv'):
-        #Seeing if our Compositions file is there
-        if not fileName in os.listdir('.'):
-            raise Exception("Missing Compositions File in Directory " + os.getcwd())
-        #Opening the Compositions File
-        with open(fileName, 'r') as inFile:
-            data = inFile.read()
-            #Splitting up the CSV
-            self.lines = [i.split(',') for i in data.split('\n') if i]
-            self.category = self.lines.pop(0)
-            self.header = self.lines.pop(0)
+        if self.web:
+            data = urllib.request.urlopen('https://raw.githubusercontent.com/achmav/stressStrainProcess/master/Compositions.csv').read()
+        else:
+            #Seeing if our Compositions file is there
+            if not fileName in os.listdir('.'):
+                raise Exception("Missing Compositions File in Directory " + os.getcwd())
+            #Opening the Compositions File
+            with open(fileName, 'r') as inFile:
+                data = inFile.read()
+        #Splitting up the CSV
+        self.lines = [i.split(',') for i in data.split('\n') if i]
+        self.category = self.lines.pop(0)
+        self.header = self.lines.pop(0)
     def _loadAll(self):
         self._unpickleSamples()
         #Making a Dictionary for each Line and turning it into a Sample
