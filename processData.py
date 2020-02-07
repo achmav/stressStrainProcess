@@ -50,6 +50,23 @@ class dataStruct():
         #Finding the Formulations
         formulationNames = list(set([i.formulation for i in self.samples]))
         self.formulations = [formulation([x for x in self.samples if x.formulation == i]) for i in formulationNames]
+    #Makes a Pandas DF of Formulations
+    def make_dataframe(self):
+        import pandas
+        sample_type = []
+        for x in [i for i in self.formulations if hasattr(i,'maxStress') and getattr(i,'maxStress')]:
+            if x.name in [i for i in range(23,52)]+[i for i in range(57,62)]+[75,76]:
+                sample_type.append('Initial Samples')
+            elif x.name in [43,44,46,75,76]:
+                sample_type.append('Base Components')
+            else:
+                sample_type.append('TSEMO Composition')
+
+        data = {'maxStress':[getattr(i,'maxStress') for i in self.formulations if hasattr(i,'maxStress') and getattr(i,'maxStress')],
+                        'youngSlope':[getattr(i,'youngSlope') for i in self.formulations if hasattr(i,'maxStress') and getattr(i,'youngSlope')],
+                        'toughness':[getattr(i,'toughness') for i in self.formulations if hasattr(i,'maxStress') and getattr(i,'toughness')],
+                        'sampleType':sample_type}
+        return pandas.DataFrame(data=data)
     #Pickling Functions
     def _pickleSamples(self):
         if not self.web:
@@ -873,13 +890,14 @@ class plot3d(plot):
 
 if __name__ == "__main__":
     test = dataStruct(processAll = True)
+    print(test.make_dataframe())
     #test.saveFormulations()
     
     #performanceSpacePlot(test.formulations, show = False)
     #for sample in test.samples:
     #    stressStrainPlot(sample, show = False)
 
-    plot3d(test.formulations, show = True)
+    #plot3d(test.formulations, show = True)
     #a = [i for i in test.samples if i.formulation == 103]
     #for x in a:
         #stressStrainPlot(x, show = True)
