@@ -24,6 +24,7 @@ class dataStruct():
     #Loads in our Composition File
     def _loadCompositions(self,fileName = 'Compositions.csv'):
         if self.web:
+            import urllib
             data = urllib.request.urlopen('https://raw.githubusercontent.com/achmav/stressStrainProcess/master/Compositions.csv').read()
         else:
             #Seeing if our Compositions file is there
@@ -72,6 +73,7 @@ class dataStruct():
             #Link to our Input Data
             inputUrl = 'https://github.com/achmav/stressStrainProcess/raw/master/DataNew/Samples.p'
             #Loading it in from Putty
+            import urllib
             filedata = urllib.request.urlopen(inputUrl)
             self.samples = pickle.load(filedata)
         else:
