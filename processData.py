@@ -11,6 +11,7 @@ import urllib
 class dataStruct():
     def __init__(self,processAll = True, web = False):
         self.web = web
+        print(self.web)
         #Blank Dict to hold Samples
         self.samples = []
         #Loading our Compositions
@@ -872,11 +873,11 @@ class plot3d(plot):
 
 if __name__ == "__main__":
     test = dataStruct(processAll = True)
-    test.saveFormulations()
+    #test.saveFormulations()
     
-    performanceSpacePlot(test.formulations, show = False)
-    for sample in test.samples:
-        stressStrainPlot(sample, show = False)
+    #performanceSpacePlot(test.formulations, show = False)
+    #for sample in test.samples:
+    #    stressStrainPlot(sample, show = False)
 
     plot3d(test.formulations, show = True)
     #a = [i for i in test.samples if i.formulation == 103]
