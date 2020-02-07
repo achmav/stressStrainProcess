@@ -7,7 +7,8 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 
 class dataStruct():
-    def __init__(self,processAll = True):
+    def __init__(self,processAll = True, web = False):
+        self.web = web
         #Blank Dict to hold Samples
         self.samples = []
         #Loading our Compositions
@@ -44,15 +45,16 @@ class dataStruct():
         self.formulations = [formulation([x for x in self.samples if x.formulation == i]) for i in formulationNames]
     #Pickling Functions
     def _pickleSamples(self):
-        with open(os.path.join('DataNew','Samples.p'), 'wb') as outFile:
-            #Importing Pickle
-            try:
-                import cPickle as pickle
-            except:
-                import pickle
-            #Dumping our Samples
-            pickle.dump(self.samples, outFile)
-            print('Saved ' +str(len(self.samples))+ ' Samples to Samples.p')
+        if not self.web:
+            with open(os.path.join('DataNew','Samples.p'), 'wb') as outFile:
+                #Importing Pickle
+                try:
+                    import cPickle as pickle
+                except:
+                    import pickle
+                #Dumping our Samples
+                pickle.dump(self.samples, outFile)
+                print('Saved ' +str(len(self.samples))+ ' Samples to Samples.p')
     #Loading Formulations
     def _unpickleSamples(self):
         #Importing Pickle
@@ -61,10 +63,17 @@ class dataStruct():
         except:
             import pickle
         #If we've got a pickle file, let's load it
-        if 'Samples.p' in os.listdir('DataNew'):
-            with open(os.path.join('DataNew','Samples.p'), 'rb') as inFile:
-                self.samples = pickle.load(inFile)
-            print('Loaded in ' + str(len(self.samples)) + ' samples from Cache')
+        if self.web:
+            #Link to our Input Data
+            inputUrl = 'https://github.com/achmav/stressStrainProcess/raw/master/DataNew/Samples.p'
+            #Loading it in from Putty
+            filedata = urllib.request.urlopen(inputUrl)
+            self.samples = pickle.load(filedata)
+        else:
+            if 'Samples.p' in os.listdir('DataNew'):
+                with open(os.path.join('DataNew','Samples.p'), 'rb') as inFile:
+                    self.samples = pickle.load(inFile)
+                print('Loaded in ' + str(len(self.samples)) + ' samples from Cache')
     #Loads in proposed samples
     def _loadProposals(self):
         import os
