@@ -890,12 +890,12 @@ class plot3d(plot):
 
 if __name__ == "__main__":
     test = dataStruct(processAll = True)
-    print(test.make_dataframe())
-    #test.saveFormulations()
+    #print(test.make_dataframe())
+    test.saveFormulations()
     
-    #performanceSpacePlot(test.formulations, show = False)
-    #for sample in test.samples:
-    #    stressStrainPlot(sample, show = False)
+    performanceSpacePlot(test.formulations, show = False)
+    for sample in test.samples:
+        stressStrainPlot(sample, show = False)
 
     #plot3d(test.formulations, show = True)
     #a = [i for i in test.samples if i.formulation == 103]
