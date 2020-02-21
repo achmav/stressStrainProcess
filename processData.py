@@ -114,7 +114,7 @@ class dataStruct():
     #Exports Formulations
     def saveFormulations(self):
             #Ignore Files
-        ignore = [23,24,36,40,54,55,56,57,58,59,60,61]
+        ignore = [23,24,36,40,54,55,56,57,58,59,60,61,149,150,151]
         formulations = [i for i in self.formulations if int(i.name) not in ignore and i.samples and i.maxStrainCV]
         #Dealing with the Formulations that need averaging
         avgForms = [i for i in self.formulations if int(i.name) in [55,56,57,58,59,60,61]]
