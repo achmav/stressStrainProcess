@@ -11,7 +11,6 @@ import urllib
 class dataStruct():
     def __init__(self,processAll = True, web = False):
         self.web = web
-        print(self.web)
         #Blank Dict to hold Samples
         self.samples = []
         #Loading our Compositions
@@ -19,7 +18,7 @@ class dataStruct():
         #Creating All Samples
         if processAll:
             self._loadAll()
-            self._organizeCompositions()
+        self._organizeCompositions()
         self._loadProposals()
         self._pickleSamples()
     #Loads in our Composition File
@@ -43,7 +42,7 @@ class dataStruct():
         #Making a Dictionary for each Line and turning it into a Sample
         for line in self.lines:
             #Making sure we don't have this datapoint already loaded
-            if int(line[0]) not in [i.name for i in self.samples if i.formulation == int(line[1])]:
+            if line[0] != '' and int(line[0]) not in [i.name for i in self.samples if i.formulation == int(line[1])]:
                 self.samples.append(sample(line,self.category,self.header))
     #Organizes Compositions
     def _organizeCompositions(self):
@@ -139,13 +138,13 @@ class dataStruct():
         #inputSamples File (Compositions)
         with open(os.path.join('Plots','inputSamples.txt'), 'w') as outFile:
             spamwriter = csv.writer(outFile, delimiter='\t', lineterminator='\n')
-            spamwriter.writerow([avgForms[0].composition[i] for i in avgForms[0].composition.keys()])
+            #spamwriter.writerow([avgForms[0].composition[i] for i in avgForms[0].composition.keys()])
             for n in formulations:
                 spamwriter.writerow([n.composition[i] for i in n.composition.keys()])
         #outputData File (Results)
         with open(os.path.join('Plots','outputData.txt'), 'w') as outFile:
             spamwriter = csv.writer(outFile, delimiter='\t', lineterminator='\n')
-            spamwriter.writerow([sum([i.maxStress for i in avgForms])/len(avgForms),sum([i.youngSlope for i in avgForms])/len(avgForms),sum([i.toughness for i in avgForms])/len(avgForms)])
+            #spamwriter.writerow([sum([i.maxStress for i in avgForms])/len(avgForms),sum([i.youngSlope for i in avgForms])/len(avgForms),sum([i.toughness for i in avgForms])/len(avgForms)])
             for n in formulations:
                 spamwriter.writerow([n.maxStress,n.youngSlope,n.toughness])
 
@@ -157,7 +156,17 @@ class dataStruct():
             self.samples.append(sample(dataLine[0],self.category,self.header))
         else:
             print('No Sample Found')
-
+    #Removes Samples from the Pickle File
+    def removeSamples(self,sampleNumbers):
+        startLen = len(self.samples)
+        self.samples = [i for i in self.samples if i.formulation not in sampleNumbers]
+        numRemoved = startLen - len(self.samples)
+        print('Removed ' + str(numRemoved) + ' samples from the Dataset.')
+        #Making the User Confirm the Removal
+        okay = input('Confirm removal (y) or deny (n)')
+        if okay.lower() == 'y':
+            self._pickleSamples()
+        
 #Saves a Formulation
 class formulation():
     def __init__(self,samples):
@@ -353,7 +362,6 @@ class sample():
         self.trimmedData.append(self.stressData[:startOfRange+1])
         self.trimmedData.append(self.stressData[cropPoint-1:])
         self.stressData = self.stressData[startOfRange:cropPoint]
-        #Recalculating the Parameters
         self._physicalCharacteristics()
         self._calculateYoungs()
         self._calculateToughness()
@@ -364,6 +372,7 @@ class sample():
         percentageOfMax = .3 #What percentage of the highest peak can we look for a lower one in
         lookAhead = 3 #How many negative slopes we need after our dip
         percentDrop = 0.005 #Size of Drop
+        startPercent = .3 #Beginning area where Failure "Cannot" happen
         #Getting the Slope of our Stress/Strain
         dS = self._calculateSlopes([i['Engineering Strain'] for i in self.stressData],[i['Engineering Stress'] for i in self.stressData])
         #Getting the 2nd Derivative
@@ -371,13 +380,17 @@ class sample():
         potentialPeaks = [[i+1,j] for i,j in enumerate(dSS) if j < -1 * slopeChange]
         #Making sure we're decling afterwards
         potentialPeaks = [[i,j] for i,j in potentialPeaks if min([x['Engineering Stress'] for x in self.stressData[i:i+lookAhead+1]]) < self.stressData[i]['Engineering Stress'] * (1-percentDrop)]
+        #Filtering out all the "Starting" points it accidentally picks, added 8/10/2020
+        potentialPeaks = [[i,j] for i,j in potentialPeaks if i > startPercent * len(self.stressData)]
         if debug:
+            potentialPeaks = sorted(potentialPeaks, key = lambda x:-1 * x[0])
             for index,derriv in potentialPeaks:
                 stress = self.stressData[index]['Engineering Stress']
                 strain = self.stressData[index]['Engineering Strain']
                 print('Stress ' + str(round(stress,2)) + ' Strain ' + str(round(strain,2)) + ' Index ' + str(index) + ' dSS ' + str(round(derriv,2)) + ' dS ' + str(round(dS[index],2)))
         if potentialPeaks:
-            potentialPeaks = sorted(potentialPeaks, key = lambda x:x[0])
+            #Changed to -1 * x on 8/10/2020 from x[0]
+            potentialPeaks = sorted(potentialPeaks, key = lambda x:-1 * x[0])
             #Correcting for offset from Derrivs
             return potentialPeaks[0][0] + 1
         #No need to Trim
@@ -596,6 +609,8 @@ class stressDataFile():
             data = inFile.read()
         #Splitting up the CSV
         lines = [i.split(',') for i in data.split('\n') if i]
+        #Getting rid of Empty Lines
+        lines = [i for i in lines if not all([x == '' for x in i])]
         #Seeing if we've got a date header
         startInt = [i for i,val in enumerate(lines) if 'Time' in val[0]][0]
         lines = lines[startInt:]
@@ -892,15 +907,18 @@ if __name__ == "__main__":
     test = dataStruct(processAll = True)
     #print(test.make_dataframe())
     test.saveFormulations()
-    
     performanceSpacePlot(test.formulations, show = False)
     for sample in test.samples:
         stressStrainPlot(sample, show = False)
 
     #plot3d(test.formulations, show = True)
-    #a = [i for i in test.samples if i.formulation == 103]
+    #a = [i for i in test.samples if i.formulation > 253]
+    #print([i.formulation for i in a])
     #for x in a:
         #stressStrainPlot(x, show = True)
 
     #import os
     #proposedSamples(os.path.join('Plots','TSEmoOpt','3','proposedSamples_1.txt'))
+
+    #test = dataStruct(processAll = False)
+    #test.removeSamples([i.formulation for i in test.samples if i.formulation > 254])
